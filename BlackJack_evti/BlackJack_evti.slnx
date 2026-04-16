@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="../BlackJackClasses/BlackJackClasses.csproj" />
+  <Project Path="../BlackJackTest/BlackJackTest.csproj" Id="e96260b3-3c18-4afe-bcc5-282adbb232ce" />
+  <Project Path="../GameInterface/GameInterface.csproj" Id="9bd7dd0c-cdad-43fb-a7be-d35a6191e804" />
+  <Project Path="BlackJack_evti.csproj" />
+</Solution>
