@@ -10,13 +10,12 @@ namespace BlackJackClasses
 
         public Dealer(int cash) : base(cash) { }
         
-        public void FillHand(Shoe shoe, int standAt, IView view)
+        public void FillHand(Shoe shoe, int standAt)
         {
             while (Hand.CalcValue() < standAt)
             {
                 Card card = shoe.DrawCard();
                 Hand.AddCard(card);
-                view.DisplayMessage($" + {card}");
             }
         }
 

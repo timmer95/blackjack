@@ -8,6 +8,7 @@ class Program
     {
         View view = new View();
         Game game = new Game(view);
+
         game.SetUp();
         game.Play();
     }

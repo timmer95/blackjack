@@ -1,11 +1,12 @@
 using BlackJackClasses;
+using Delegates;
 using GameInterface;
 using Moq;
 
 namespace BlackJackTest;
 
 [TestClass]
-public class TestPlayerAction
+public class TestPlayerBasicAction
 {
     static readonly Card spadesKing = new Card(10, "Spades", "King");
     static readonly Card diamondFour = new Card(4, "Diamonds");
@@ -19,8 +20,7 @@ public class TestPlayerAction
     {
         // Arrange
         var mockView = new Mock<IView>();
-        mockView.Setup(vw => vw.DisplayMessage(It.IsAny<string>()));
-        mockView.Setup(vw => vw.ReadInput()).Returns("stand");
+        mockView.Setup(vw => vw.GetValidatedInput<string>(It.IsAny<string>(), It.IsAny<Validator<string>>())).Returns("stand");
 
         Game game = new Game(mockView.Object) { NPlayers = 1 };
         game.SetUp();
@@ -29,8 +29,8 @@ public class TestPlayerAction
         game.AskUserActionChoice();
 
         // Assert
-        mockView.Verify(vw => vw.DisplayMessage(It.IsRegex(".*hit.*")));
-        mockView.Verify(vw => vw.DisplayMessage(It.IsRegex(".*stand.*")));
+        mockView.Verify(vw => vw.GetValidatedInput<string>(It.IsRegex(".*hit.*"), It.IsAny<Validator<string>>()));
+        mockView.Verify(vw => vw.GetValidatedInput<string>(It.IsRegex(".*stand.*"), It.IsAny<Validator<string>>()));
 
     }
 
@@ -41,7 +41,7 @@ public class TestPlayerAction
         string actionOfChoice = "hit";
 
         var mockView = new Mock<IView>();
-        mockView.Setup(vw => vw.ReadInput()).Returns(actionOfChoice);
+        mockView.Setup(vw => vw.GetValidatedInput<string>(It.IsAny<string>(), It.IsAny<Validator<string>>())).Returns(actionOfChoice);
 
         Game game = new Game(mockView.Object) { NPlayers = 1 };
 
@@ -60,7 +60,7 @@ public class TestPlayerAction
         string correctAction = "stand";
 
         var mockView = new Mock<IView>();
-        mockView.SetupSequence(vw => vw.ReadInput()).Returns(wrongAction).Returns(wrongAction).Returns(correctAction);
+        mockView.SetupSequence(vw => vw.GetValidatedInput<string>(It.IsAny<string>(), It.IsAny<Validator<string>>())).Returns(wrongAction).Returns(wrongAction).Returns(correctAction);
         Game game = new Game(mockView.Object) { NPlayers = 1 };
      
         // Act
@@ -83,7 +83,7 @@ public class TestPlayerAction
         Game game = new Game(mockView.Object) { NPlayers = 1 };
         game.SetUp();
 
-        HumanPlayer player = game.ActivePlayers.First();
+        HumanPlayer player = game.ActivePlayers!.First();
         player.AddToHand(spadesTwo, diamondFour); // Such low values, hit will never bust
 
         // Act
@@ -105,7 +105,7 @@ public class TestPlayerAction
 
         Game game = new Game(mockView.Object) { NPlayers = 1 };
         game.SetUp();
-        HumanPlayer player = game.ActivePlayers.First();
+        HumanPlayer player = game.ActivePlayers!.First();
         player.AddToHand(spadesKing, heartsQueen);
         
         // Act
@@ -128,7 +128,7 @@ public class TestPlayerAction
         Game game = new Game(mockView.Object) { NPlayers = 1 };
         game.SetUp();
 
-        HumanPlayer player = game.ActivePlayers.First();
+        HumanPlayer player = game.ActivePlayers!.First();
         player.AddToHand(spadesKing, diamondFour);
         
         // Act
@@ -150,7 +150,7 @@ public class TestPlayerAction
         Game game = new Game(mockView.Object) { NPlayers = 1 };
         game.SetUp();
 
-        HumanPlayer player = game.ActivePlayers.First();
+        HumanPlayer player = game.ActivePlayers!.First();
         player.AddToHand(spadesKing, fakeCardTooHigh); // is already 21, no one would hit but for the test they will
         
         // Act

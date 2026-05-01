@@ -19,8 +19,7 @@ public class TestFillDealerHand
 
     Dealer dealer;
 
-    [TestInitialize]
-    public void BeforeEach()
+    public TestFillDealerHand()
     {
         dealer = new Dealer(1000);
     }

@@ -10,13 +10,11 @@ namespace BlackJackClasses
         public Player? Winner { get; init; }
         public Player? Loser { get; init;  }
         public bool Tie { get; private set; }
-        public bool IsBusted { get; init; } = false;
 
-        public BetResult(Player winner, Player loser, bool isBusted=false)
+        public BetResult(Player winner, Player loser)
         {
             Winner = winner;
             Loser = loser;
-            IsBusted = isBusted;
             SetTie();
         }
 

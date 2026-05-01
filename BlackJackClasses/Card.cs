@@ -7,7 +7,7 @@ namespace BlackJackClasses
 {
     internal class Card
     {
-        public int Value { get; init; } // nullable for Ace? or Ace has value 11? or do {get; set;} so Ace value can be changed to 1?
+        public int Value { get; init; }
         public string Name { get; init; }
         public string Suit { get; init; }
         public bool FacedUp { get; set; } = false;
@@ -27,7 +27,7 @@ namespace BlackJackClasses
         }
 
         public override bool Equals(object? obj) // then you also need to implement GetHashCode. what if they don't align? then both get ignored
-            // card == card results in comparison of suits, value and name. however, they do not refer to same object. 
+                                                 // card == card results in comparison of suits, value and name. however, they do not refer to same object. 
         {
             if (obj is Card card2)
             {

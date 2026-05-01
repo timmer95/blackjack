@@ -1,4 +1,6 @@
-﻿using GameInterface;
+﻿using Delegates;
+using GameInterface;
+using System.Numerics;
 
 namespace BlackJackClasses
 {
@@ -16,6 +18,11 @@ namespace BlackJackClasses
         public int DealerCash { get; set; } = 18000;
         public int NPlayers { get; set;} = 5;
         public int PlayerCash { get; set; } = 1000;
+        public string[] Actions { get; set; } = ["hit", "stand"];
+
+
+
+       
 
         public void SetUp()
         {
@@ -75,19 +82,23 @@ namespace BlackJackClasses
             // calcValue, if Blackjack things happen
             
             FinishBets();
-
         }
+        //internal string AskUserActionChoice()
+        //{
+        //    string? actionChoice = null;
+        //    while (!Actions.Contains(actionChoice) || actionChoice is null)
+        //    {
+        //        View.DisplayMessage($"choose action: {string.Join(", ", Actions)}");
+        //        actionChoice = View.ReadInput();
+        //    }
+        //    return actionChoice; 
+        //}
+
         internal string AskUserActionChoice()
         {
-            string[] options = ["hit", "stand"];
-            string? actionChoice = null;
-            while (!options.Contains(actionChoice) || actionChoice is null)
-            {
-                View.DisplayMessage($"Choose action: hit or stand");
-                actionChoice = View.ReadInput();
-            }
-            return actionChoice; 
+            return View.GetValidatedInput<string>($"choose action: {string.Join(", ", Actions)}", CreateParseAction());
         }
+            
 
         internal bool ExecuteAction(string action, HumanPlayer player)
         {
@@ -108,8 +119,32 @@ namespace BlackJackClasses
                 //        // if BlackJack? no. that must already have been considered. 
                 case "stand":
                     return false;
-                default:
+                case "double down":
+                    bool isSuccess = false;
+                    while (!isSuccess)
+                    {
+                        View.DisplayMessage($"Player {player.PlayerId}, double bet with: (max {player.Bet})", endOnSameLine: true);
+                        isSuccess = int.TryParse(View.ReadInput(), out int doubledBet);
+                        if (doubledBet > player.Bet)
+                        {
+                            View.DisplayMessage($"Your bet of {player.Bet} can be at most doubled");
+                            isSuccess = false;
+                        }
+                        else
+                        {
+                            player.Bet += doubledBet;
+                        }
+                    }
+
+                    player.AddToHand(Shoe!.DrawCard());
+                    player.Hand.CalcValue();
+                    if (player.Hand.Value > 21) 
+                    { 
+                        View.DisplayMessage($"\t❌ BUSTED (Hand: {player.Hand})"); 
+                    }
                     return false;
+                default:
+                    throw new InvalidOperationException($"Unknown action {action}");
             }
         }
 
@@ -133,9 +168,8 @@ namespace BlackJackClasses
         internal void FinishBets()
         {
             Dealer!.Hand.CalcInitialValue();                 // also sets IsBlackJack
-            View.DisplayMessage($"Dealer Hand: {Dealer.Hand}", endOnSameLine: true);
-            Dealer.FillHand(Shoe!, DealerStandAt, View);           // Upon BlackJack, no filling happens bc value is too high
-
+            Dealer.FillHand(Shoe!, DealerStandAt);           // Upon BlackJack, no filling happens bc value is too high
+            View.DisplayMessage($"Dealer with {Dealer.Hand} ({Dealer.Hand.Value})");
             // Decide Personal Bets
             //foreach (HumanPlayer player in ActivePlayers)
             for (int i = 0; i < ActivePlayers!.Length; i++)
@@ -155,13 +189,13 @@ namespace BlackJackClasses
                 Player loser = betResult.Loser!;
                 int betToPay = winner.Hand.IsBlackJack ? player.Bet * 3 / 2 : player.Bet;
                 betResult.Winner!.CollectBet(betResult.Loser!.PayMoney(player.Bet, betResult.Winner!.Hand.IsBlackJack));
-                View.DisplayMessage($"\tWinner {winner} (total cash: {winner.Cash}) collects {betToPay} from {loser} (total cash: {loser.Cash})");
+                View.DisplayMessage($"\t\tWinner {winner} (total cash: {winner.Cash}) collects {betToPay} from {loser} (total cash: {loser.Cash})");
             }
         }
 
         internal BetResult DecidePersonalBet(Dealer dealer, HumanPlayer player)
         {
-            View.DisplayMessage($"Dealer with {dealer.Hand} ({dealer.Hand.Value}) VS Player {player.PlayerId} with {player.Hand} ({player.Hand.Value})");
+            View.DisplayMessage($"\tVS Player {player.PlayerId} with {player.Hand} ({player.Hand.Value})");
             return player.Hand.Value switch
             {
                 // Ugly solution to non-constant conditions
@@ -189,24 +223,42 @@ namespace BlackJackClasses
         {
             foreach (HumanPlayer player in ActivePlayers!)
             {
-                bool isSuccess = false;
-                while (!isSuccess)
-                {
-                    View.DisplayMessage($"Player {player.PlayerId} with cash {player.Cash}, what is your bet?");
-                    var inp = View.ReadInput();
-                    isSuccess = int.TryParse(inp, out int bet);
-                    try
-                    {
-                        player.SetBet(bet);
-                    }
-                    catch (InvalidOperationException e)
-                    {
-                        isSuccess = false;
-                    }
-                }
+                string msg = $"Player {player.PlayerId} with cash {player.Cash}, what is your bet?";
+                int bet = View.GetValidatedInput(msg, CreateParseBetValidator(player.Cash));
+                player.SetBet(bet);
             }
         }
 
-    }        
+        internal Validator<int> CreateParseBetValidator(int cash)
+        {
+            Validator<int> ParseBet = (string inp, out int bet) =>
+            {
+                bool isSuccess = int.TryParse(inp, out bet);
+                if (isSuccess)
+                {
+                    isSuccess = (bet <= cash / 1.5);
+                }
+                return isSuccess;
+            };
 
+            return ParseBet;
+        }
+
+        internal Validator<string> CreateParseAction()
+        {
+            Validator<string> ParseAction = (string inputS, out string actionChoice) =>
+            {
+                actionChoice = inputS;
+                if (!this.Actions.Contains(actionChoice) || actionChoice is null)
+                {
+                    return false;
+                }
+                return true;
+            };
+            return ParseAction;
+        }
+
+
+
+    }       
 }
